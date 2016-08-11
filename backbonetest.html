@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Document</title>
+  <script src="jq/jquery-1.10.2.min.js"></script>
+  <script src="underscore/underscore.js"></script>
+  <script src="juicer/src/juicer.js"></script>
+  <script src="backbone/backbone.js"></script>
+  <style type="text/css">
+    
+  </style>
+</head>
+<body>
+  <div id="new"></div>
+  <div id="todo"></div>
+  
+  <script type="text/template" id="to">
+    <div class="view">
+    <p>todo</p>
+    {@each models as it,index}
+      {@if it.attributes.completed == false}
+      <div><span id=${index}>${it.attributes.title}</span><button class="aa">完成</button><button class="del">删除</button></div>
+      {@/if}
+    {@/each}
+
+    <p>completed</p>
+      {@each models as it,index}
+        {@if it.attributes.completed == true}
+        <div><span id=${index}>${it.attributes.title}</span><button class="aa">未完成</button><button class="del">删除</button></div>
+        {@/if}
+      {@/each}
+    </div>
+  </script>
+  <script type="text/template" id="n">
+    <div class="view">
+      <input id="in"></input><button id="add">增加</button>
+    </div>
+  </script>
+  <script type="text/javascript">
+    var Todos = [{title:'shabi',completed:false},{title:'dasha',completed:false},{title:'dashabi',completed:false},{title:'nisb',completed:true}];
+    var TODO = Backbone.Model.extend({
+      default:{
+        title:'',
+        completed:false
+      },
+      change:function(){
+        return !this.attributes.completed;
+      }
+      
+    });
+    var collection = Backbone.Collection.extend({
+      model:TODO
+    });
+
+
+    var _collection = new collection(Todos);
+    var View = Backbone.View.extend({
+      el:'#todo',
+      tagName:'div',
+      // template:_.template($('#to').html()),
+      events:{
+        'click .aa' : 'aa',
+        'click .del' : 'del'
+      },
+      initialize:function() {
+        this.collection = _collection;
+        // var model = new TODO({todo: Todos});
+        this.listenTo(_collection,'all', function() {
+         this.render();
+        });
+      },
+      render:function() {
+
+        var models = this.collection.models;
+          var tpl = $('#to').html();
+          var template = juicer(tpl, {models});
+          this.$el.html(template);
+      },
+      aa: function(e){
+        var col = $(e.target).prev().attr('id');
+        _collection.models[col].change();
+        _collection.models[col].attributes.completed = !_collection.models[col].attributes.completed;
+        this.render();
+      },
+      del: function(e){
+        // console.log( $(e.target));
+        var col = $(e.target).prev().prev().attr('id')
+        _collection.models[col].destroy();
+        // $(e.target).parent().css('display','none');
+        // return todo.destroy();
+      }
+    });
+    var New = Backbone.View.extend({
+      el:'#new',
+      template:_.template($('#n').html()),
+      events:{
+         "keypress #in" : 'ent',
+         'click #add' : 'add'
+      },
+      initialize:function(){
+        
+      },
+      render:function(){
+        this.$el.html(this.template);
+        return this;
+      },
+      ent:function(e){
+        if (e.keyCode != 13) return;
+        var model = {
+          title:$('#in').val(),
+          completed:false
+        };
+        _collection.add(model);
+      },
+      add:function(e){
+        var model = {
+          title:$('#in').val(),
+          completed:false
+        };
+        _collection.add(model);
+      }
+    });
+
+  var _new = new New();
+  _new.render();
+  var _view = new View();
+  _view.render();
+
+  </script>
+</body>
+</html>
